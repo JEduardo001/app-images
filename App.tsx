@@ -8,6 +8,7 @@ import AlbumImages from './screens/albumImages';
 import { createStackNavigator } from '@react-navigation/stack';
 import DetailImage from './screens/detailImage';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import UploadImage from './screens/UploadImage';
 
 /* 
 const Tab = createBottomTabNavigator();
@@ -17,7 +18,8 @@ const Tabs = () => {
   const Tab = createBottomTabNavigator();
   return (
     <Tab.Navigator>
-        <Tab.Screen name="home" component={Home}   options={{ headerShown: false }}/>
+        <Tab.Screen name="home" component={Home}   options={{title: "Home", headerShown: false }}/>
+        <Tab.Screen name="uploadImage" component={UploadImage}   options={{ title: "Compartir", headerShown: false }}/>
     </Tab.Navigator>
   )
 }
