@@ -12,7 +12,7 @@ const TarjetCategory = ({item}: {item: CategoriaFoto}) => {
 
     return (
         <TouchableOpacity onPress={() => navigation.navigate('albumImages',{ dataCategory: item })} style = {styles.tarjetCategory}>
-             <Image
+            <Image
                 source={{ uri: item.gifUrl}}
                 style={styles.image}
             />

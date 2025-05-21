@@ -7,7 +7,6 @@ import TarjetImage from '../components/tarjetImage';
 import { randomImages } from '../constants';
 import { Ionicons } from '@expo/vector-icons';
 
-
 type AlbumImagesRouteProp = RouteProp<RootStackParamList, 'albumImages'>;
 
 const AlbumImages = () => {
