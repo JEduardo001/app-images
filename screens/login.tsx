@@ -1,9 +1,13 @@
-import {View,Text,StyleSheet, TextInput,TouchableOpacity,Image} from 'react-native'
-import { useState } from 'react';
+import {View,Text,StyleSheet, TextInput,TouchableOpacity,Image, Modal, Button} from 'react-native'
+import { useEffect, useState } from 'react';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import RootStackParamList from '../types/navigation';
 import { useNavigation } from '@react-navigation/native';
 import {categories} from '../constants/index'
+import {loginUser} from '../services/api'
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {storeDataAsyncStorage,validateEmail} from "../helpers/auth"
+import { Ionicons } from '@expo/vector-icons';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'home'>;
 
@@ -11,10 +15,87 @@ const Login = () => {
     const navigation = useNavigation<NavigationProp>()
     const [email,setEmail] = useState('');
     const [password,setPassword] = useState('')
+    const [messageModal,setMessageModal] = useState('')
+    const [showPassword,setShowPassword] = useState(false)
+
+    const messageError = 'Ocurrió un problema. Asegurate de que los datos sean correctos'
+   
     const genRandomColor = () => {
         return Math.floor(Math.random() * 249) + 1; 
 
     } 
+
+    useEffect(() => {
+       const validateUser = async () => {
+            try {
+                const value = await AsyncStorage.getItem('id');
+                if (value !== null) {
+                    console.log('Usuario logeado');
+                    navigation.replace('home')
+                }
+            } catch (e) {
+                console.error('Error leyendo dato:', e);
+            }
+        };
+        validateUser()
+ 
+    },[])
+
+   const login = async () => {
+        if (!email || !password) {
+            console.log('Debes ingresar email y password');
+            showModal('Debes ingresar email y password')
+            return
+        }
+        if(!validateEmail(email)){
+            showModal("Porfavor ingresa un email válido")
+            return
+        }
+        
+        const data = { email, password };
+
+        try {
+            const response = await loginUser(data);
+            console.log('Login correcto:', response.data);
+            if(response.data.message == "Login exitoso"){
+                storeDataAsyncStorage(response.data.user)
+                navigation.replace('home')
+
+            }else{
+                showModal(messageError)
+            }
+        } catch (error) {
+            console.log('Error en login:', error);
+            showModal(messageError)
+
+        }
+    };
+
+    const showModal = (message: string) => {
+        setMessageModal(message)
+        setVisible(true)
+    }
+
+    const [visible, setVisible] = useState(false);
+    
+        const ComponentModal = () => {
+            return (
+                <Modal
+                    transparent={true}
+                    visible={visible}
+                    animationType="slide"
+                    onRequestClose={() => setVisible(false)}
+                >
+                    <View style={styles.modalBackground}>
+                    <View style={styles.modalContainer}>
+                        <Text style = {styles.textModal}>{messageModal}</Text>
+                        <Button title="Aceptar" onPress={() => setVisible(false)} />
+                    </View>
+                    </View>
+                </Modal>
+            )
+        }
+
     return (
         <View style = {styles.container}>
             {/* background login */}
@@ -50,20 +131,36 @@ const Login = () => {
                     onChangeText={setEmail}
                 />
                 <Text style = {styles.inputTitle}>Contraseña</Text>
-                <TextInput
-                    style={styles.input}
-                    placeholder="Contraseña"
-                    placeholderTextColor="black"
-                    value={password}
-                    onChangeText={setPassword}
-                />
-                <TouchableOpacity onPress={() => navigation.replace('home')} style ={styles.btn}>
+                <View style = {{flexDirection: "row", alignItems: "center"}}>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Contraseña"
+                        placeholderTextColor="black"
+                        secureTextEntry={showPassword}
+                        value={password}
+                        onChangeText={setPassword}
+                    />
+                    <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style ={styles.btnShowPassword}>
+                        <Ionicons
+                            name={showPassword ? 'eye-off' : 'eye'}
+                            size={24}
+                            color="gray"
+                        />                   
+                     </TouchableOpacity>
+                </View>
+                <TouchableOpacity onPress={() => login()} style ={styles.btn}>
                     <Text style ={styles.subtitle}>Iniciar Sesión</Text>
                 </TouchableOpacity>
                 <Text style = {[styles.inputTitle, {marginTop: 50}]}>¿ Aún no tienes cuenta ? </Text>
                 <TouchableOpacity onPress={() => navigation.navigate('register', {})} style ={styles.btn}>
                     <Text style ={styles.subtitle}>Regístrate</Text>
                 </TouchableOpacity>
+                {
+                    visible
+                    ?
+                    <ComponentModal />
+                    : null
+                }
             </View>
             
         </View>
@@ -111,5 +208,22 @@ const styles = StyleSheet.create({
         position: "absolute",
         alignItems: "center",
         backgroundColor: "rgba(0, 0, 0, 0.85)",
+    },
+     modalBackground: {
+        flex: 1, justifyContent: 'center', alignItems: 'center',
+        backgroundColor: 'rgba(0,0,0,0.5)'
+    },
+    modalContainer: {
+        width: 300, padding: 20, backgroundColor: 'white', borderRadius: 10
+    },
+    textModal: {
+        margin: 15
+    },
+    btnShowPassword: {
+        justifyContent: "center",
+        backgroundColor: "white",
+        padding: 5,
+        borderRadius: 10,
+        marginLeft: 10
     }
 })

@@ -33,7 +33,7 @@ export default function App() {
   return (
     <NavigationContainer>
       <StatusBar style="light" />
-      <Stack.Navigator initialRouteName='home'>
+      <Stack.Navigator initialRouteName='login'>
       <Stack.Screen name="home" component={Tabs} options={{ headerShown: false }} />
       <Stack.Screen name="albumImages" component={AlbumImages}  options={{ headerShown: false }} />
       <Stack.Screen name="detailImage" component={DetailImage}  options={{ headerShown: false }} />

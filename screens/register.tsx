@@ -3,14 +3,21 @@ import { useState } from 'react';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import RootStackParamList from '../types/navigation';
 import { useNavigation } from '@react-navigation/native';
-
+import {registerUser} from "../services/api"
+import {validateEmail} from "../helpers/auth"
+import { Ionicons } from '@expo/vector-icons';
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'home'>;
 
 const Register = () => {
     const navigation = useNavigation<NavigationProp>()
+    const [username,setUsername] = useState('');
     const [email,setEmail] = useState('');
     const [password,setPassword] = useState('')
+    const [passwordRepeat,setPasswordRepeat] = useState('')
+    const [showPassword,setShowPassword] = useState(false)
+
     const [visible, setVisible] = useState(false);
+    const [messageModal, setMessageModal] = useState("");
 
     const ComponentModal = () => {
         return (
@@ -22,16 +29,61 @@ const Register = () => {
         >
             <View style={styles.modalBackground}>
             <View style={styles.modalContainer}>
-                <Text>Ya tienes cuenta!</Text>
-                <Button title="Iniciar Sesión" onPress={() => {setVisible(false); navigation.replace('login',{})}} />
+                <Text>{messageModal}</Text>
+                <Button title="Aceptar" onPress={() => setVisible(false)} />
             </View>
             </View>
         </Modal>
         )
     }
+
+    const register = async () => {
+        if(password != passwordRepeat){
+            showModal("Las contraseñas no coinciden. Porfavor verificalas")
+            return
+        }
+        if(!password || !email){
+            showModal("Porfavor rellena los campos")
+            return
+        }
+        if(!validateEmail(email)){
+            showModal("Porfavor ingresa un email válido")
+            return
+        }
+
+        const data = { email, password, username };
+        
+        try {
+            const response = await registerUser(data);
+            if(response.data.message == "Usuario registrado"){
+                showModal("Cuenta creada con exito")
+
+            }else{
+                showModal("Error al registrarte. Email ya registrado, usa uno diferente")
+            }
+        } catch (error) {
+            console.log('Error al registrarse:', error);
+            showModal("Error al registrarte. Vuelve a intentarlo")
+
+        }
+
+    }
+
+    const showModal = (message: string) => {
+        setMessageModal(message)
+        setVisible(true)
+    }
     return (
         <View style = {styles.container}>
             <Text style = {styles.subtitle}>Registro</Text>
+            <Text style = {styles.inputTitle}>Nombre de usuario</Text>
+            <TextInput
+                style={styles.input}
+                placeholder="Nombre"
+                placeholderTextColor="black"
+                value={username}
+                onChangeText={setUsername}
+            />
             <Text style = {styles.inputTitle}>Email</Text>
             <TextInput
                 style={styles.input}
@@ -41,31 +93,38 @@ const Register = () => {
                 onChangeText={setEmail}
             />
             <Text style = {styles.inputTitle}>Contraseña</Text>
+            <View style = {{flexDirection: "row",alignItems: "center"}}>
+                <TextInput
+                    style={styles.input}
+                    placeholder="Contraseña"
+                    placeholderTextColor="black"
+                    secureTextEntry={showPassword}
+                    value={password}
+                    onChangeText={setPassword}
+                />
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style ={styles.btnShowPassword}>
+                    <Ionicons
+                        name={showPassword ? 'eye-off' : 'eye'}
+                        size={24}
+                        color="gray"
+                       
+                    />                   
+                </TouchableOpacity>
+            </View>
+           
+            <Text style = {styles.inputTitle}>Repetir contraseña</Text>
+
             <TextInput
                 style={styles.input}
                 placeholder="Contraseña"
                 placeholderTextColor="black"
-                value={password}
-                onChangeText={setPassword}
+                secureTextEntry={showPassword}
+                value={passwordRepeat}
+                onChangeText={setPasswordRepeat}
             />
-              <Text style = {styles.inputTitle}>Repetir contraseña</Text>
-            <TextInput
-                style={styles.input}
-                placeholder="Contraseña"
-                placeholderTextColor="black"
-                value={password}
-                onChangeText={setPassword}
-            />
-              <Text style = {styles.inputTitle}>Nombre de usuario</Text>
-            <TextInput
-                style={styles.input}
-                placeholder="Nombre"
-                placeholderTextColor="black"
-                value={password}
-                onChangeText={setPassword}
-            />
+           
             <ComponentModal />
-            <TouchableOpacity onPress={() => setVisible(true)} style ={styles.btn}>
+            <TouchableOpacity onPress={() => register()} style ={styles.btn}>
                 <Text>Registrar</Text>
             </TouchableOpacity>
           
@@ -115,5 +174,12 @@ const styles = StyleSheet.create({
     },
     modalContainer: {
         width: 300, padding: 20, backgroundColor: 'white', borderRadius: 10
+    },
+    btnShowPassword: {
+        justifyContent: "center",
+        backgroundColor: "white",
+        padding: 5,
+        borderRadius: 10,
+        marginLeft: 10
     }
 })
