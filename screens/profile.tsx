@@ -1,16 +1,19 @@
-import {View,Text,StyleSheet, TextInput,TouchableOpacity,Image, Dimensions, Modal, Button, Alert} from 'react-native'
+import {View,Text,StyleSheet, TextInput,TouchableOpacity,Image, Dimensions, Modal, Button, Alert, FlatList, ScrollView} from 'react-native'
 import { useState,useEffect } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
+import { Ionicons } from '@expo/vector-icons';
 
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import RootStackParamList from '../types/navigation';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {closeSession, storeDataAsyncStorage} from "../helpers/auth"
-import {updateUser,uploadProfilePic,deleteProfilePic,deleteUser} from "../services/api"
+import {updateUser,uploadProfilePic,getWallpapersByUser} from "../services/api"
 //import profileNoImage from '../assets/noProfileImg.webp'
 import { Asset } from 'expo-asset';
+import { ImageDetails } from '../types';
+import TarjetImage from '../components/tarjetImage';
 
 const { width, height } = Dimensions.get('window');
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'login'>;
@@ -27,6 +30,7 @@ const Profile = () => {
     const [email,setEmail] = useState('');
     const [profilePic, setProfilePic] = useState<any>(null);
     const [uriNewImageProfile, setUriNewImageProfile] = useState<any>(null);
+    const [imagesByUser, setImagesByUser] = useState<ImageDetails[]>([]);
 
     const [visible, setVisible] = useState(false);
     const [messageModal, setMessageModal] = useState("");
@@ -56,8 +60,26 @@ const Profile = () => {
             }
         };
         getDataUser()
- 
+        
+        getImagesByUser()
     },[])
+
+    const getImagesByUser = async ()  => {
+        try {
+        const id = await AsyncStorage.getItem('id');
+
+        const responseGetCategories = await getWallpapersByUser(id)
+        //console.log("hola  ",responseGetCategories.data)
+        if(responseGetCategories.data != null){
+            setImagesByUser(responseGetCategories.data)
+        }
+
+        //getWallpapersByUser(responseGetCategories.data)
+        } catch (error) {
+            console.log("Error al obtener las imagenes del usuario: ",error)
+        }
+
+    }
 
     const showModal = (message: string) => {
         setMessageModal(message)
@@ -177,60 +199,84 @@ const Profile = () => {
     }
 
     return (
-        <View style = {styles.container}>
-            <TouchableOpacity onPress={() => {
-                closeSession()
-                navigation.replace('login',{})
-            }} style ={styles.btnCloseSession}>
-                <Text style = {[styles.subtitle, {fontSize: 15}]}>Cerrar Sesión</Text>
-            </TouchableOpacity>
-            <Text style = {styles.title}>Mi Perfil</Text>
-            {
-                profilePic 
-                ?
-                    <Image source={{ uri: profilePic }} style={styles.image} />
-                :
-                    <Image
-                        source={require('../assets/noProfileImg.webp')}
-                        style={styles.image}
-                    />
-            }
-            <View style = {styles.containerBtnControllerPhoto}>
-                <TouchableOpacity onPress={() => pickImage()} style ={styles.btnChangePhoto}>
-                    <Text style ={styles.subtitle}>Cambiar foto</Text>
-                </TouchableOpacity>
+        <ScrollView style = {styles.container}>
+            <View style = {[styles.container,{alignItems: "center"}]}>
                 <TouchableOpacity onPress={() => {
-                    setProfilePic(null)
-                    setUriNewImageProfile(null)
-                    }} style ={styles.btnDeletePhoto}>
-                    <Text style ={styles.subtitle}>Eliminar foto</Text>
-                </TouchableOpacity>
+                        closeSession()
+                        navigation.replace('login',{})
+                    }} style ={styles.btnCloseSession}>
+                        <Text style = {[styles.subtitle, {fontSize: 15}]}>Cerrar Sesión</Text>
+                    </TouchableOpacity>
+                    <Text style = {styles.title}>Mi Perfil</Text>
+                    {
+                        profilePic 
+                        ?
+                            <Image source={{ uri: profilePic }} style={styles.image} />
+                        :
+                            <Image
+                                source={require('../assets/noProfileImg.webp')}
+                                style={styles.image}
+                            />
+                    }
+                    <View style = {styles.containerBtnControllerPhoto}>
+                        <TouchableOpacity onPress={() => pickImage()} style ={styles.btnChangePhoto}>
+                            <Text style ={styles.subtitle}>Cambiar foto</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => {
+                            setProfilePic(null)
+                            setUriNewImageProfile(null)
+                            }} style ={styles.btnDeletePhoto}>
+                            <Text style ={styles.subtitle}>Eliminar foto</Text>
+                        </TouchableOpacity>
+                    </View>
+                    <Text style = {[styles.inputTitle, {fontSize: 20}]}>Usuario</Text>
+                    <TextInput
+                        style={styles.input}
+                        placeholder=""
+                        placeholderTextColor="black"
+                        value={username}
+                        onChangeText={setUsername}
+                    />
+                {/*  <Text style = {[styles.inputTitle, {fontSize: 20}]}>Email</Text>
+                    <TextInput
+                        style={styles.input}
+                        placeholder=""
+                        placeholderTextColor="black"
+                        value={email}
+                        onChangeText={setEmail}
+                    /> */}
+                    <TouchableOpacity style ={styles.btnSave} onPress = {() => saveDataUser()}>
+                        <Text>Guardar</Text>
+                    </TouchableOpacity> 
             </View>
-            <Text style = {[styles.inputTitle, {fontSize: 20}]}>Usuario</Text>
-            <TextInput
-                style={styles.input}
-                placeholder=""
-                placeholderTextColor="black"
-                value={username}
-                onChangeText={setUsername}
-            />
-           {/*  <Text style = {[styles.inputTitle, {fontSize: 20}]}>Email</Text>
-            <TextInput
-                style={styles.input}
-                placeholder=""
-                placeholderTextColor="black"
-                value={email}
-                onChangeText={setEmail}
-            /> */}
-            <TouchableOpacity style ={styles.btnSave} onPress = {() => saveDataUser()}>
-                <Text>Guardar</Text>
-            </TouchableOpacity> 
+
+            <TouchableOpacity onPress = {() => getImagesByUser()} style = {styles.btnRefresh}>
+                <Ionicons name="refresh" size={24} color="black" />
+            </TouchableOpacity>
+            <Text style = {[styles.title,{margin: 10, marginTop: 20}]}>Tus imagenes</Text>
+
+            <View style = {styles.containerImagesRandom}>
+                {
+                    !imagesByUser || imagesByUser.length == 0
+                    ? <Text style = {[styles.title,{textAlign: "center"}]}>Sin imagenes</Text>
+                    :
+                        <FlatList 
+                            data={imagesByUser}
+                            keyExtractor={item => item._id.toString()}
+                            renderItem={({item}) => <TarjetImage item={item}/>}
+                            numColumns={2}
+                            scrollEnabled={false}
+                        />
+
+                }
+               
+            </View>
             {
                 visible
                 ? <ComponentModal />
                 : null   
             }
-        </View>
+        </ScrollView>
     )
 }
 
@@ -239,7 +285,7 @@ export default Profile
 const styles = StyleSheet.create({
     container:{
         flex: 1,
-        alignItems: "center",
+        //alignItems: "center",
         backgroundColor: 'black'
     },
     title: {
@@ -306,5 +352,18 @@ const styles = StyleSheet.create({
     },
     modalContainer: {
         width: 300, padding: 20, backgroundColor: 'white', borderRadius: 10
-    }
+    },
+    btnRefresh: {
+        borderRadius: 10,
+        backgroundColor: "white",
+        padding: 9,
+        marginLeft: 30,
+        width: 45,
+    },
+     containerImagesRandom: {
+        marginTop: 50,
+        backgroundColor: "black",
+        width: "100%",
+        marginBottom: 50
+    },
 })

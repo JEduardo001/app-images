@@ -12,6 +12,7 @@ import UploadImage from './screens/UploadImage';
 import Profile from './screens/profile'
 import Login from './screens/login';
 import Register from './screens/register';
+import EditImage from './screens/editImage';
 /* 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator<RootStackParamList>() */
@@ -37,8 +38,10 @@ export default function App() {
       <Stack.Screen name="home" component={Tabs} options={{ headerShown: false }} />
       <Stack.Screen name="albumImages" component={AlbumImages}  options={{ headerShown: false }} />
       <Stack.Screen name="detailImage" component={DetailImage}  options={{ headerShown: false }} />
+      <Stack.Screen name="editImage" component={EditImage}  options={{ headerShown: false }} />
       <Stack.Screen name="login" component={Login}  options={{ headerShown: false }} />
       <Stack.Screen name="register" component={Register}  options={{ headerShown: false }} />
+      <Stack.Screen name="profile" component={Profile}   options={{ title: "Perfil", headerShown: false }}/>
 
       </Stack.Navigator>
     </NavigationContainer>

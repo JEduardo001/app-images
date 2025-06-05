@@ -17,6 +17,17 @@ export const storeDataAsyncStorage = async (data) => {
   }
 };
 
+export const getIdUser = async () => {
+  try  {
+    const id = await AsyncStorage.getItem('id');
+    //console.log("eñ valor es ",id)
+    return id
+  } catch (error) {
+      console.log("Error al obtener el id de asyng storage")
+  }
+    
+}
+
 export const closeSession = async () => {
     try {
         await AsyncStorage.removeItem('id');

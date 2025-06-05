@@ -1,38 +1,78 @@
 import { RouteProp, useRoute } from '@react-navigation/native';
-import {StyleSheet,View,Text,Image, Dimensions,TouchableOpacity} from 'react-native'
+import {StyleSheet,View,Text,ScrollView,Image, Dimensions,TouchableOpacity} from 'react-native'
 import { Ionicons } from '@expo/vector-icons';
 import RootStackParamList from '../types/navigation';
+import { useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { toggleWallpaperLike } from '../services/api';
 
 type AlbumImagesRouteProp = RouteProp<RootStackParamList, 'detailImage'>;
 const { width, height } = Dimensions.get('window');
 
 const DetailImage = () => {
     const route = useRoute<AlbumImagesRouteProp>();
+    const [cantLikes,setCantLikes] =  useState(0)
     const { dataImage } = route.params;
     
+
+    useEffect(() => {
+        setCantLikes(dataImage.likes)
+    },[]) 
+
+    const setLike = async () => {
+        setCantLikes(cantLikes + 1)
+        try {
+            const id = await AsyncStorage.getItem('id');
+
+            const responseGetCategories = await toggleWallpaperLike(dataImage._id,id)
+            if(responseGetCategories.data.msg == "Like agregado"){
+                setCantLikes(responseGetCategories.data.newLikes)
+                console.log("Like Agregado")
+            }else{
+                if(responseGetCategories.data.msg == "Like removido"){
+                    setCantLikes(responseGetCategories.data.newLikes)
+
+                }
+
+            }
+          
+        } catch (error) {
+            console.log("Error al obtener categorias: ",error)
+        }
+    }
+
     return (
-        <View style = {styles.container}>
+        <ScrollView style = {styles.container}>
             <Image
                 source={{ uri: dataImage.imageUrl }}
                 style={styles.image}
             />
             <View style ={styles.containerMenu}>
-                <Text style = {styles.textName}>caca</Text>
                 <View style = {styles.containerDetails}>
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress = {() => setLike()}>
                         <Ionicons name="heart" size={32} color="red" />
                     </TouchableOpacity>
-                    <Text style = {styles.textDetails}>1.7 k!</Text>
+                    <Text style = {styles.textDetails}>  {cantLikes}</Text>
                 </View>
+               
                 <View>
                     <TouchableOpacity>
                         <Ionicons name="download-outline" size={32} color="blue" />
                     </TouchableOpacity>
-                    <Text style = {styles.textDetails}>134</Text>
+                   {/*  <Text style = {styles.textDetails}>134</Text> */}
                 </View>
 
             </View>
-        </View>
+            <Text style = {{color: "white",fontSize: 20, margin: 15}}>Descripción</Text>
+            <View style = {styles.containerDescription}>
+               {
+                dataImage.description == null
+                ?  <Text style = {{}}>Sin descripción</Text>
+                :  <Text style = {{}}>{dataImage.description}</Text>
+               } 
+
+            </View>
+        </ScrollView>
     )   
 }
 
@@ -72,5 +112,12 @@ const styles = StyleSheet.create({
     },
     containerDetails: {
 
+    },
+    containerDescription: {
+        padding: 10,
+        borderRadius: 20,
+        margin: 10,
+        backgroundColor: "rgba(255, 255, 255, 0.86)",
+        marginBottom: 100
     }
 })

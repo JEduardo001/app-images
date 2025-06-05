@@ -4,6 +4,8 @@ type RootStackParamList = {
     home: undefined
     albumImages: { dataCategory: CategoriaFoto,index:number }
     detailImage: { dataImage: ImageDetails}
+    editImage: { dataImage: ImageDetails };  
+    profile: {}
     login: {}
     register: {}
 };

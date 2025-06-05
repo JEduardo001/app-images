@@ -9,6 +9,7 @@ import { useState,useEffect } from 'react';
 import {getCategories,getAllWallpapers} from "../services/api"
 import { Ionicons } from '@expo/vector-icons';
 import {ImageDetails} from "../types/index"
+import AsyncStorage from "@react-native-async-storage/async-storage";
 const { width, height } = Dimensions.get('window');
 type ImageItem = {
   id: string;
@@ -20,6 +21,7 @@ const Home = () => {
 
     const [categories,setCategories] = useState()
     const [txtSearch,setTxtSearch] = useState("")
+    const [idUser,setIdUser] = useState("")
 
     const [images, setImages] = useState<ImageDetails[]>([]);
     const [imagesBySearch, setImagesBySearch] = useState<ImageDetails[]>([]);
@@ -40,27 +42,30 @@ const Home = () => {
     useEffect(() => {
        const categoriesGet = async ()  => {
         try {
+          
             const responseGetCategories = await getCategories()
             setCategories(responseGetCategories.data)
-            console.log("r  ",responseGetCategories.data)
+            //console.log("r  ",responseGetsCategories.data)
         } catch (error) {
             console.log("Error al obtener categorias: ",error)
         }
 
        }
        categoriesGet()
-       const getImages = async ()  => {
+       
+       getImages()
+    },[])
+
+    const getImages = async ()  => {
         try {
             const responseGetAllImages = await getAllWallpapers()
-            console.log("imagenes ",responseGetAllImages.data)
+            //console.log("imagenes ",responseGetAllImages.data)
             setImages(responseGetAllImages.data)
         } catch (error) {
             console.log("Error al obtener todas las imagenes: ",error)
         }
 
-       }
-       getImages()
-    },[])
+    }
 
     return (
         <ScrollView style ={styles.container}>
@@ -78,6 +83,7 @@ const Home = () => {
                     <Ionicons name="search" size={24} color="black" />
                 </TouchableOpacity>
             </View>
+
             <View>
                 <FlatList
                     data={categories}
@@ -88,6 +94,10 @@ const Home = () => {
                     contentContainerStyle={{ paddingHorizontal: 10 }}
                 />
             </View>
+
+            <TouchableOpacity onPress = {() => getImages()} style = {styles.btnRefresh}>
+                <Ionicons name="refresh" size={24} color="black" />
+            </TouchableOpacity>
 
             {/* <ImagesRandom itseem={imsages}/> */}
             <View style = {styles.containerImagesRandom}>
@@ -120,7 +130,8 @@ const styles = StyleSheet.create({
      containerImagesRandom: {
         marginTop: 50,
         backgroundColor: "black",
-        width: "100%"
+        width: "100%",
+        marginBottom: 50
     },
      containerSearch: {
         width: "100%",
@@ -143,6 +154,13 @@ const styles = StyleSheet.create({
         backgroundColor: "white",
         padding: 9,
         marginLeft: 30
+    },
+    btnRefresh: {
+        borderRadius: 10,
+        backgroundColor: "white",
+        padding: 9,
+        marginLeft: 30,
+        width: 45,
     }
    
 })
