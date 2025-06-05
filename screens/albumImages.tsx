@@ -1,38 +1,49 @@
 import { StyleSheet, View, Text, Image, FlatList } from 'react-native';
 import { RouteProp, useRoute } from '@react-navigation/native';
-import { useEffect } from 'react';
+import { useEffect,useState } from 'react';
 import CategoriaFoto from '../types';
 import RootStackParamList from '../types/navigation';
 import TarjetImage from '../components/tarjetImage';
-import { randomImages } from '../constants';
+import { categoriesDefault, randomImages } from '../constants';
 import { Ionicons } from '@expo/vector-icons';
+import {getWallpapersByCategory} from "../services/api"
 
 type AlbumImagesRouteProp = RouteProp<RootStackParamList, 'albumImages'>;
 
 const AlbumImages = () => {
   const route = useRoute<AlbumImagesRouteProp>();
-  const { dataCategory } = route.params;
-
-  useEffect(() => {
-    console.log("jplaaa", dataCategory.id);
-  }, []);
-
+  const { dataCategory,index } = route.params;
+  const [images,setImages] = useState()
+  
+   useEffect(() => {
+        const imagesGet = async ()  => {
+          try {
+              const responseGetImages = await getWallpapersByCategory(dataCategory._id)
+              setImages(responseGetImages.data)
+              //console.log("imagenes de la categra  ",responseGetImages.data)
+          } catch (error) {
+              console.log("Error al obtener las imagenes: ",error)
+          }
+  
+        }
+        imagesGet()
+       
+    },[])
+      
   return (
     <View style = {styles.container}>
         <FlatList
-            data={randomImages}
-            keyExtractor={item => item.id.toString()}
+            data={images}
+            keyExtractor={item => item._id.toString()}
             renderItem={({item}) => <TarjetImage item={item}/>}
             numColumns={2}
             contentContainerStyle={{ paddingBottom: 100 }}
             ListHeaderComponent={
                 <>
-                <Image
-                    source={{ uri: dataCategory.gifUrl }}
-                    style={styles.image}
-                />
+                <Image source={categoriesDefault[index]} style={styles.image} />
+               
                 <View style={styles.containerInfo}>
-                    <Text style={styles.textInfo}>{dataCategory.nombre}</Text>
+                    <Text style={styles.textInfo}>{dataCategory.name}</Text>
                     <View style = {styles.containerPopularity}>
                       <Ionicons name="heart" size={28} color="white" />
                       <Text style={styles.textInfo}>52.4 k!</Text>

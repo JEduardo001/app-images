@@ -4,20 +4,20 @@ import { useNavigation } from '@react-navigation/native'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import  RootStackParamList  from '../types/navigation';
 import { Ionicons } from '@expo/vector-icons';
+import { categoriesDefault } from '../constants';
+import { useState,useEffect } from 'react';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'home'>;
 
-const TarjetCategory = ({item}: {item: CategoriaFoto}) => {
+const TarjetCategory = ({ item, index }: { item: CategoriaFoto; index: number }) => {
     const navigation = useNavigation<NavigationProp>()
 
     return (
-        <TouchableOpacity onPress={() => navigation.navigate('albumImages',{ dataCategory: item })} style = {styles.tarjetCategory}>
-            <Image
-                source={{ uri: item.gifUrl}}
-                style={styles.image}
-            />
+        <TouchableOpacity onPress={() => navigation.navigate('albumImages',{ dataCategory: item,index })} style = {styles.tarjetCategory}>
+            <Image source={categoriesDefault[index]} style={styles.image} />
+
             <View style = {styles.containerInfo}>
-                <Text style = {styles.textInfo}>{item.nombre}</Text>
+                <Text style = {styles.textInfo}>{item.name}</Text>
                 <View style = {styles.containerPopularity}>
                     <Ionicons name="heart" size={20} color="red" />
                     <Text style = {styles.textInfo}>28.5k</Text>    

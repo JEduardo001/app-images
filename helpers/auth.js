@@ -5,6 +5,11 @@ export const storeDataAsyncStorage = async (data) => {
     await AsyncStorage.setItem('id', data._id);
     await AsyncStorage.setItem('email', data.email);
     await AsyncStorage.setItem('username', data.username);
+    if(data.profilePic != null){
+     await AsyncStorage.setItem('profilePic', data.profilePic);
+
+    }
+   // await AsyncStorage.setItem('password', data.password);
 
     console.log('Dato guardado');
   } catch (e) {
@@ -17,6 +22,8 @@ export const closeSession = async () => {
         await AsyncStorage.removeItem('id');
         await AsyncStorage.removeItem('email');
         await AsyncStorage.removeItem('username');
+        await AsyncStorage.removeItem('profilePic');
+        await AsyncStorage.removeItem('password');
 
         console.log('Dato eliminado');
     } catch (e) {

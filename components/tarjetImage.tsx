@@ -3,11 +3,11 @@ import { RandomImage } from '../types'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import RootStackParamList from '../types/navigation';
 import { useNavigation } from '@react-navigation/native';
-
+import {ImageDetails} from "../types/index"
 const { width, height } = Dimensions.get('window');
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'home'>;
 
-const TarjetImage = ({item}: {item: RandomImage}) => {
+const TarjetImage = ({item}: {item: ImageDetails}) => {
     const navigation = useNavigation<NavigationProp>()
     
     return (

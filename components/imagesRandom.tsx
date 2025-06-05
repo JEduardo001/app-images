@@ -1,13 +1,13 @@
 import {StyleSheet,View,Text,TouchableOpacity,Image, FlatList} from 'react-native'
-import { RandomImage } from '../types'
+import { ImageDetails } from '../types'
 import TarjetImage from './tarjetImage'
 
-const ImagesRandom = ({item}: {item: RandomImage[]}) => {
+const ImagesRandom = ({item}: {item: ImageDetails[]}) => {
     return (
         <View style = {styles.containerImagesRandom}>
             <FlatList 
                 data={item}
-                keyExtractor={item => item.id.toString()}
+                keyExtractor={item => item._id.toString()}
                 renderItem={({item}) => <TarjetImage item={item}/>}
                 numColumns={2}
                 scrollEnabled={false}

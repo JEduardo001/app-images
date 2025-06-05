@@ -10,7 +10,22 @@ import {storeDataAsyncStorage,validateEmail} from "../helpers/auth"
 import { Ionicons } from '@expo/vector-icons';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'home'>;
+/* 
+eduardo@gmail.com
+1234
 
+
+
+{
+    "msg": "Login exitoso",
+    "user": {
+        "_id": "6840f682f668dfd265abfc9c",
+        "email": "gloria@gmail.com",
+        "password": "$2b$10$LRW4bXYTaV5KNUqaKXLrNuOhyl2TeZn.1c.ZNyVwsxTZ8OKFwrrqa",
+        "username": "gloria"
+    }
+}
+*/
 const Login = () => {
     const navigation = useNavigation<NavigationProp>()
     const [email,setEmail] = useState('');
@@ -53,18 +68,20 @@ const Login = () => {
         }
         
         const data = { email, password };
-
+        
         try {
             const response = await loginUser(data);
-            console.log('Login correcto:', response.data);
-            if(response.data.message == "Login exitoso"){
+           // console.log("estaod ",response)
+            if(response.data.msg == "Login exitoso"){
+                console.log('Login correcto:', response.data);
+
                 storeDataAsyncStorage(response.data.user)
                 navigation.replace('home')
 
             }else{
                 showModal(messageError)
             }
-        } catch (error) {
+        } catch (error: any) {
             console.log('Error en login:', error);
             showModal(messageError)
 

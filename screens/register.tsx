@@ -37,37 +37,38 @@ const Register = () => {
         )
     }
 
-    const register = async () => {
-        if(password != passwordRepeat){
-            showModal("Las contraseñas no coinciden. Porfavor verificalas")
-            return
-        }
-        if(!password || !email){
-            showModal("Porfavor rellena los campos")
-            return
-        }
-        if(!validateEmail(email)){
-            showModal("Porfavor ingresa un email válido")
-            return
-        }
-
-        const data = { email, password, username };
-        
-        try {
-            const response = await registerUser(data);
-            if(response.data.message == "Usuario registrado"){
-                showModal("Cuenta creada con exito")
-
-            }else{
-                showModal("Error al registrarte. Email ya registrado, usa uno diferente")
+        const register = async () => {
+            if(password != passwordRepeat){
+                showModal("Las contraseñas no coinciden. Porfavor verificalas")
+                return
             }
-        } catch (error) {
-            console.log('Error al registrarse:', error);
-            showModal("Error al registrarte. Vuelve a intentarlo")
+            if(!password || !email){
+                showModal("Porfavor rellena los campos")
+                return
+            }
+            if(!validateEmail(email)){
+                showModal("Porfavor ingresa un email válido")
+                return
+            }
+
+            const data = { email, password, username };
+            
+            try {
+                const response = await registerUser(data);
+                if(response.data.msg == "Usuario registrado"){
+                    showModal("Cuenta creada con exito")
+
+                }else{
+                    console.log("Error al registrarte. Error: ", response)
+                    showModal("Error al registrarte. Email ya registrado, usa uno diferente")
+                }
+            } catch (error) {
+                console.log('Error al registrarse:', error);
+                showModal("Error al registrarte. Vuelve a intentarlo")
+
+            }
 
         }
-
-    }
 
     const showModal = (message: string) => {
         setMessageModal(message)

@@ -17,7 +17,7 @@ const DetailImage = () => {
                 style={styles.image}
             />
             <View style ={styles.containerMenu}>
-                <Text style = {styles.textName}>{dataImage.nombre}</Text>
+                <Text style = {styles.textName}>caca</Text>
                 <View style = {styles.containerDetails}>
                     <TouchableOpacity>
                         <Ionicons name="heart" size={32} color="red" />

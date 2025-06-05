@@ -1,24 +1,36 @@
-import {View,Text,StyleSheet, TextInput,TouchableOpacity,Image, Dimensions, Modal, Button} from 'react-native'
+import {View,Text,StyleSheet, TextInput,TouchableOpacity,Image, Dimensions, Modal, Button, Alert} from 'react-native'
 import { useState,useEffect } from 'react';
 import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system';
+
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import RootStackParamList from '../types/navigation';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {closeSession, storeDataAsyncStorage} from "../helpers/auth"
-import {updateUser} from "../services/api"
+import {updateUser,uploadProfilePic,deleteProfilePic,deleteUser} from "../services/api"
+//import profileNoImage from '../assets/noProfileImg.webp'
+import { Asset } from 'expo-asset';
 
 const { width, height } = Dimensions.get('window');
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'login'>;
 
+type RNFile = {
+  uri: string;
+  name: string;
+  type: string;
+};
 const Profile = () => {
     const navigation = useNavigation<NavigationProp>()
     const [id,setId] = useState('');
     const [username,setUsername] = useState('');
     const [email,setEmail] = useState('');
-    const [image, setImage] = useState<string | null>(null);
+    const [profilePic, setProfilePic] = useState<any>(null);
+    const [uriNewImageProfile, setUriNewImageProfile] = useState<any>(null);
+
     const [visible, setVisible] = useState(false);
     const [messageModal, setMessageModal] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
        const getDataUser = async () => {
@@ -26,7 +38,11 @@ const Profile = () => {
                 const id = await AsyncStorage.getItem('id');
                 const email = await AsyncStorage.getItem('email');
                 const username = await AsyncStorage.getItem('username');
-                
+                const profile = await AsyncStorage.getItem('profilePic');
+
+                if(profile != null){
+                    setProfilePic(profile)
+                }
                 if (email !== null && username !== null && id !== null) {
                    setUsername(username)
                    setEmail(email)
@@ -49,48 +65,98 @@ const Profile = () => {
     }
 
     const saveDataUser = async () => {
-         try {
-            const response = await updateUser(email,{username});
-            if(response.data.message == "Usuario actualizado"){
-                storeDataAsyncStorage({
-                    _id: id,
-                    email: email,
-                    username: username
-                })
-
-                console.log("Datos actualizados")
-                showModal("Información actualizada")
-            }else{
-                console.log('Ocurrio un problema al actualizar los datos del usuario',response.data.error);
-                showModal("Ocurrío un problema, vuelve a intentarlo")
-
-            }
-        } catch (error) {
-            console.log('Error al actualizar los datos del usuario:', error);
-            showModal("Ocurrío un problema, vuelve a intentarlo")
-
+        var uriNewImage
+        if(uriNewImageProfile == null){
+            //toma la uri de sin foto
+            const asset = Asset.fromModule(require('../assets/noProfileImg.webp'));
+            await asset.downloadAsync()  // Asegura que la imagen esté lista
+       
+            uriNewImage = asset.localUri; 
+            //deleteProfilePic(email)
+        }else{
+            uriNewImage = uriNewImageProfile
         }
+        //console.log("2222 ",uriNewImage)
+        await uploadImage(uriNewImage);
+
+        try {
+            const password = await AsyncStorage.getItem('password');
+
+           const response = await updateUser(email,username);
+
+           if(response.data.msg == "Usuario actualizado"){
+               storeDataAsyncStorage({
+                   _id: id,
+                   email: email,
+                   username: username,
+                   profilePic: profilePic
+
+               })
+
+               console.log("Datos actualizados")
+               showModal("Información actualizada")
+           }else{
+               console.log('Ocurrio un problema al actualizar los datos del usuario',response.data.error);
+               showModal("Ocurrío un problema, vuelve a intentarlo")
+
+           }
+       } catch (error) {
+           console.log('Error al actualizar los datos del usuario:', error);
+           showModal("Ocurrío un problema, vuelve a intentarlo")
+
+       } 
     }
     const pickImage = async () => {
-        // Pide permisos
-        const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    
-        if (permissionResult.granted === false) {
-          alert('Se requieren permisos para acceder a la galería.');
-          return;
+        // Pedir permisos para acceder a la galería
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+            Alert.alert('Permisos necesarios', 'Necesitamos acceso a tu galería para cambiar la foto de perfil');
+            return;
         }
-    
-        // Abre la galería
-        const result = await ImagePicker.launchImageLibraryAsync({
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
-          allowsEditing: true,
-          quality: 1,
+
+        let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
         });
-    
+
         if (!result.canceled) {
-          setImage(result.assets[0].uri);
+            setProfilePic(result.assets[0].uri)
+            setUriNewImageProfile(result.assets[0].uri)
+        //await uploadImage(result.assets[0].uri);
         }
-      };
+    };
+
+    const uploadImage = async (uriNewImage: any) => {
+     setIsLoading(true);
+        try {
+            console.log("uri: ",uriNewImage)
+            // Convertir la imagen a formato que pueda ser enviado
+            const fileInfo = await FileSystem.getInfoAsync(uriNewImage);
+            const fileType = fileInfo.uri.split('.').pop();
+
+            const formData = new FormData();
+
+            formData.append('image', {
+                uri: uriNewImage,
+                name: `profile.${fileType}`,
+                type: `image/${fileType}`,
+            } as unknown as Blob);
+
+            const response = await uploadProfilePic(email, formData);
+            
+            setProfilePic(response.data.profilePic);
+
+            Alert.alert('Éxito', 'Foto de perfil actualizada');
+        } catch (err: any) {
+            console.log(err);
+            Alert.alert('Error', err.response?.data?.error || 'Error al actualizar la foto');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
 
     const ComponentModal = () => {
         return (
@@ -120,9 +186,9 @@ const Profile = () => {
             </TouchableOpacity>
             <Text style = {styles.title}>Mi Perfil</Text>
             {
-                image 
+                profilePic 
                 ?
-                    <Image source={{ uri: image }} style={styles.image} />
+                    <Image source={{ uri: profilePic }} style={styles.image} />
                 :
                     <Image
                         source={require('../assets/noProfileImg.webp')}
@@ -133,7 +199,10 @@ const Profile = () => {
                 <TouchableOpacity onPress={() => pickImage()} style ={styles.btnChangePhoto}>
                     <Text style ={styles.subtitle}>Cambiar foto</Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => setImage(null)} style ={styles.btnDeletePhoto}>
+                <TouchableOpacity onPress={() => {
+                    setProfilePic(null)
+                    setUriNewImageProfile(null)
+                    }} style ={styles.btnDeletePhoto}>
                     <Text style ={styles.subtitle}>Eliminar foto</Text>
                 </TouchableOpacity>
             </View>
